@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { PanelLeftClose, PanelLeftOpen, LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { drawerItems } from "@/utils/drawerItems";
 import { UserRole, DrawerItem } from "@/types";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { removeUser } from "@/services/auth.services";
+import { useLogoutMutation } from "@/redux/api/authApi";
 
 const GROUPS: DrawerItem["group"][] = ["General", "Tracking", "Management"];
 
@@ -25,7 +28,20 @@ export function SidebarNav({
   onToggleCollapsed?: () => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const items = drawerItems(role);
+  const [logout] = useLogoutMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+    } catch {
+      // server logout is best-effort; always clear the client-side token
+    }
+    removeUser();
+    toast.success("Logged out");
+    router.push("/login");
+  };
 
   return (
     <nav
@@ -98,6 +114,31 @@ export function SidebarNav({
           </div>
         );
       })}
+
+      <div className="mt-auto border-t pt-3">
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger render={<div />}>
+              <button
+                onClick={handleLogout}
+                aria-label="Log out"
+                className="flex w-full items-center justify-center rounded-md px-2 py-1.5 text-sm text-foreground/80 transition-colors hover:bg-muted"
+              >
+                <LogOut className="size-4 shrink-0" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Log out</TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-foreground/80 transition-colors hover:bg-muted"
+          >
+            <LogOut className="size-4 shrink-0" />
+            <span>Log out</span>
+          </button>
+        )}
+      </div>
     </nav>
   );
 }

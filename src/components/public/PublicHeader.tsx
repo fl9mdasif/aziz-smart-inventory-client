@@ -3,10 +3,10 @@ import { LogoMark } from "./LogoMark";
 
 // TODO: replace with the owner's real business info (phone/WhatsApp/address).
 const BUSINESS = {
-  name: "Aziz Brothers",
-  phone: "+880-1XXX-XXXXXX",
-  whatsapp: "8801XXXXXXXXX",
-  address: "Dhaka, Bangladesh",
+  name: "Aziz Brother",
+  phone: "+8801711-526763",
+  whatsapp: "+8801711526763",
+  address: "Mirpur - 1, Dhaka, Bangladesh",
 };
 
 export function PublicHeader() {
@@ -19,7 +19,7 @@ export function PublicHeader() {
             <h1 className="text-base font-semibold leading-tight tracking-tight">
               {BUSINESS.name}
             </h1>
-            <p className="text-xs text-muted-foreground">Industrial parts &amp; supplies</p>
+            <p className="text-xs text-muted-foreground">Sewing parts &amp; supplies</p>
           </div>
         </div>
         <div className="hidden items-center gap-5 text-sm text-muted-foreground sm:flex">
