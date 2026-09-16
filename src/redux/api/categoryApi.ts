@@ -31,6 +31,14 @@ const categoryApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.categories],
     }),
 
+    toggleCategoryStatus: build.mutation<TCategory, string>({
+      query: (id) => ({
+        url: `/categories/${id}/toggle-status`,
+        method: "PATCH",
+      }),
+      invalidatesTags: [tagTypes.categories],
+    }),
+
     deleteCategory: build.mutation({
       query: (id: string) => ({
         url: `/categories/${id}`,
@@ -45,5 +53,6 @@ export const {
   useCreateCategoryMutation,
   useGetAllCategoriesQuery,
   useUpdateCategoryMutation,
+  useToggleCategoryStatusMutation,
   useDeleteCategoryMutation,
 } = categoryApi;

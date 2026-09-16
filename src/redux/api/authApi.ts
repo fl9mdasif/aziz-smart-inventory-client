@@ -1,31 +1,46 @@
+import { TUser } from "@/types";
 import { baseApi } from "./baseApi";
+
+// jwtPayload the server signs into the token / returns from login
+// (aziz-server/src/app/modules/auth/service.auth.ts)
+export interface TJwtPayload {
+  _id: string;
+  username: string;
+  email: string;
+  role: TUser["role"];
+}
+
+interface TLoginResponse {
+  user: TJwtPayload;
+  accessToken: string;
+}
 
 const authApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    login: build.mutation({
-      query: (data: { email: string; password: string }) => ({
+    login: build.mutation<TLoginResponse, { email: string; password: string }>({
+      query: (data) => ({
         url: "/auth/login",
         method: "POST",
         data,
       }),
     }),
 
-    register: build.mutation({
-      query: (data: {
-        username: string;
-        email: string;
-        password: string;
-        role?: string;
-        contactNumber: string;
-        profilePicture?: string;
-      }) => ({
+    register: build.mutation<TUser, {
+      username: string;
+      email: string;
+      password: string;
+      role?: string;
+      contactNumber: string;
+      profilePicture?: string;
+    }>({
+      query: (data) => ({
         url: "/auth/register",
         method: "POST",
         data,
       }),
     }),
 
-    getMe: build.query({
+    getMe: build.query<TUser, void>({
       query: () => ({
         url: "/auth/me",
         method: "GET",
@@ -53,7 +68,7 @@ const authApi = baseApi.injectEndpoints({
       }),
     }),
 
-    logout: build.mutation({
+    logout: build.mutation<void, void>({
       query: () => ({
         url: "/auth/logout",
         method: "POST",

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { TCategory } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -12,35 +13,32 @@ export function CategoryFilter({
   activeId: string | null;
   onSelect: (id: string | null) => void;
 }) {
+  const items = [{ _id: null, name: "All" }, ...categories.filter((c) => c.isActive)];
+
   return (
-    <div className="flex flex-wrap gap-2">
-      <button
-        onClick={() => onSelect(null)}
-        className={cn(
-          "rounded-full border px-3 py-1.5 text-sm transition-colors",
-          activeId === null
-            ? "border-foreground bg-foreground text-background"
-            : "hover:bg-muted",
-        )}
-      >
-        All
-      </button>
-      {categories
-        .filter((c) => c.isActive)
-        .map((category) => (
+    <div className="flex flex-wrap gap-2 rounded-full border bg-muted/40 p-1.5">
+      {items.map((item) => {
+        const isActive = activeId === item._id;
+        return (
           <button
-            key={category._id}
-            onClick={() => onSelect(category._id ?? null)}
+            key={item._id ?? "all"}
+            onClick={() => onSelect(item._id ?? null)}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-sm transition-colors",
-              activeId === category._id
-                ? "border-foreground bg-foreground text-background"
-                : "hover:bg-muted",
+              "relative rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+              isActive ? "text-primary-foreground" : "text-foreground/70 hover:text-foreground",
             )}
           >
-            {category.name}
+            {isActive && (
+              <motion.span
+                layoutId="category-pill"
+                className="absolute inset-0 rounded-full bg-primary shadow-sm"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10">{item.name}</span>
           </button>
-        ))}
+        );
+      })}
     </div>
   );
 }

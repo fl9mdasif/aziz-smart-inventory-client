@@ -6,9 +6,11 @@ import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { useGetAllCategoriesQuery } from "@/redux/api/categoryApi";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
+import { Hero } from "@/components/public/Hero";
 import { HowToBuy } from "@/components/public/HowToBuy";
 import { CategoryFilter } from "@/components/public/CategoryFilter";
 import { ProductCard } from "@/components/public/ProductCard";
+import { FloatingWhatsApp } from "@/components/public/FloatingWhatsApp";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -36,9 +38,11 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <PublicHeader />
+      <Hero productCount={productList?.meta?.total} />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <main id="products" className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xl font-semibold tracking-tight">Available now</h2>
           <div className="relative w-full sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -48,14 +52,17 @@ export default function Home() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          {categories && categories.length > 0 && (
+        </div>
+
+        {categories && categories.length > 0 && (
+          <div className="mb-6">
             <CategoryFilter
               categories={categories}
               activeId={categoryId}
               onSelect={setCategoryId}
             />
-          )}
-        </div>
+          </div>
+        )}
 
         {isLoading && (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -88,6 +95,7 @@ export default function Home() {
 
       <HowToBuy />
       <PublicFooter />
+      <FloatingWhatsApp />
     </div>
   );
 }

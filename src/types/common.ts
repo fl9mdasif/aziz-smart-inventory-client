@@ -1,3 +1,5 @@
+import type { LucideIcon } from "lucide-react";
+
 export type TApiResponse<T> = {
   data: T;
   message?: string;
@@ -86,9 +88,17 @@ export interface TPublicProduct {
 // no multi-step lifecycle — a sale either happened or was voided.
 export type TOrderStatus = 'completed' | 'cancelled';
 
+// GET /orders and GET /orders/:id populate these two refs (see
+// service.order.ts's .populate() calls) — a plain string only when you
+// construct the POST /orders payload yourself.
+export type TOrderProductRef =
+  | string
+  | { _id: string; name: string; slug: string; thumbnail: string; status: TProductStatus; stockQuantity: number };
+export type TOrderPerformedByRef = string | { _id: string; username: string; email: string; role: UserRole };
+
 export interface TOrder {
   _id?: string;
-  productId: string;
+  productId: TOrderProductRef;
   productName: string;       // snapshot of Product.name at time of sale
   quantity: number;
   unitPrice: number;         // snapshot of Product.price at time of sale
@@ -100,7 +110,7 @@ export interface TOrder {
   status?: TOrderStatus;
   cancelledAt?: string;
   cancelReason?: string;
-  performedBy?: string;      // ref User — which staff/admin recorded this sale
+  performedBy?: TOrderPerformedByRef;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -138,6 +148,7 @@ export interface DrawerItem {
   title: string;
   path: string;
   group: "General" | "Tracking" | "Management";
+  icon: LucideIcon;
 }
 
 export interface TChartDataItem {
