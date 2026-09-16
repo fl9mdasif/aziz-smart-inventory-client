@@ -50,18 +50,44 @@ export interface TCategory {
 
 export type TProductStatus = 'active' | 'out_of_stock' | 'low_stock';
 
+// A variant is one sellable size of a product — price/stock live here, not
+// on the product. sku/sizeLabel/status are always server-derived, never
+// editable/typed directly on the client.
+export interface TVariant {
+  _id?: string;
+  sku: string;
+  thickness: number;         // mm
+  width: number;              // mm
+  length: number;              // mm
+  sizeLabel: string;            // e.g. "0.4mm x 6000mm", server-derived
+  price: number;
+  stockQuantity: number;
+  minStockThreshold: number;
+  status: TProductStatus;
+  restockIgnored: boolean;
+}
+
+// Fields the client sends when creating/replacing a variant — sku/sizeLabel/
+// status/restockIgnored are server-computed, never accepted from a form.
+export type TVariantInput = Pick<TVariant, 'thickness' | 'width' | 'length' | 'price'> &
+  Partial<Pick<TVariant, 'stockQuantity' | 'minStockThreshold'>>;
+
 export interface TProduct {
   _id?: string;
+  modelNo: string;
   name: string;
   slug: string;
   description: string;
   category: string | TCategory;
   thumbnail: string;
-  price: number;
-  status?: TProductStatus;
-  stockQuantity?: number;
-  minStockThreshold?: number;
-  restockIgnored?: boolean;
+  brand?: string;
+  moq?: string;
+  samplesAvailable?: boolean;
+  transportPackage?: string;
+  origin?: string;
+  hsCode?: string;
+  note?: string;
+  variants: TVariant[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -69,17 +95,47 @@ export interface TProduct {
 export type TAvailability = 'in stock' | 'low stock' | 'out of stock';
 
 // Shape returned by GET /products for an anonymous (unauthenticated) caller —
-// see aziz-server product service's `toPublicShape`. Deliberately thinner than
-// TProduct: no description/stockQuantity/minStockThreshold/restockIgnored,
-// and `status` is pre-derived into `availability` server-side.
+// see aziz-server product service's `toPublicShape`. Deliberately thinner
+// than TProduct — no description/modelNo/variants detail, just a price
+// range (a product can have several sizes at different prices) and an
+// overall availability rolled up from all variants' statuses.
 export interface TPublicProduct {
   _id: string;
   name: string;
   slug: string;
   thumbnail: string;
   category: { _id: string; name: string; slug: string } | string;
-  price: number;
+  priceFrom: number;
+  priceTo: number;
   availability: TAvailability;
+}
+
+// GET /products/restock-queue — one row per low/out-of-stock variant (size),
+// carrying its parent product's identity fields (see server's aggregation
+// in service.product.ts's getRestockQueue).
+export interface TRestockRow {
+  productId: string;
+  modelNo: string;
+  name: string;
+  thumbnail: string;
+  category: { _id: string; name: string; slug: string } | null;
+  variantId: string;
+  sku: string;
+  sizeLabel: string;
+  thickness: number;
+  width: number;
+  stockQuantity: number;
+  minStockThreshold: number;
+  status: TProductStatus;
+  priority: 'High' | 'Medium' | 'Low';
+}
+
+// GET /products/meta — distinct values in use, feeding the brand/
+// transportPackage/origin combobox-with-add-new fields.
+export interface TProductMeta {
+  brand: string[];
+  transportPackage: string[];
+  origin: string[];
 }
 
 
@@ -99,9 +155,11 @@ export type TOrderPerformedByRef = string | { _id: string; username: string; ema
 export interface TOrder {
   _id?: string;
   productId: TOrderProductRef;
+  variantId: string;         // which size was sold — Product.variants[]._id
   productName: string;       // snapshot of Product.name at time of sale
+  sizeLabel: string;         // snapshot of the variant's sizeLabel at time of sale
   quantity: number;
-  unitPrice: number;         // snapshot of Product.price at time of sale
+  unitPrice: number;         // snapshot of the variant's price at time of sale
   discount?: number;
   totalAmount: number;       // (unitPrice * quantity) - discount
   customerName?: string;     // optional, free text — walk-in customer's name

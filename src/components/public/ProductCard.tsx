@@ -58,7 +58,11 @@ export function ProductCard({ product }: { product: TPublicProduct }) {
           <p className="text-xs uppercase tracking-wide text-muted-foreground">{categoryName}</p>
           <h3 className="line-clamp-2 font-medium leading-snug">{product.name}</h3>
           <div className="flex items-center justify-between pt-1">
-            <span className="font-semibold">৳{product.price.toLocaleString()}</span>
+            <span className="font-semibold">
+              {product.priceFrom === product.priceTo
+                ? `৳${product.priceFrom.toLocaleString()}`
+                : `from ৳${product.priceFrom.toLocaleString()}`}
+            </span>
             <StatusBadge
               label={availabilityLabel[product.availability]}
               variant={availabilityToVariant(product.availability)}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { TProduct } from "@/types";
+import { TProduct, TVariant } from "@/types";
 import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { useCreateOrderMutation } from "@/redux/api/orderApi";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -18,10 +18,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// A sale is recorded against one specific size of a product — flatten
+// product+variant into a single pickable option (a product with multiple
+// sizes shows multiple entries here).
+interface VariantOption {
+  productId: string;
+  productName: string;
+  variant: TVariant;
+}
+
 export function OrderForm() {
   const [productSearch, setProductSearch] = useState("");
   const debouncedSearch = useDebouncedValue(productSearch, 250);
-  const [productId, setProductId] = useState("");
+  const [selectedKey, setSelectedKey] = useState(""); // `${productId}:${variantId}`
   const [quantity, setQuantity] = useState("1");
   const [discount, setDiscount] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -34,12 +43,19 @@ export function OrderForm() {
     limit: 30,
   });
   const products = (productList?.items ?? []) as TProduct[];
-  const selectedProduct = products.find((p) => p._id === productId);
+  const options: VariantOption[] = products.flatMap((p) =>
+    (p.variants ?? [])
+      .filter((v) => v.status !== "out_of_stock")
+      .map((variant) => ({ productId: p._id as string, productName: p.name, variant })),
+  );
+  const selected = options.find(
+    (o) => `${o.productId}:${o.variant._id}` === selectedKey,
+  );
 
   const [createOrder, { isLoading }] = useCreateOrderMutation();
 
   const resetForm = () => {
-    setProductId("");
+    setSelectedKey("");
     setProductSearch("");
     setQuantity("1");
     setDiscount("");
@@ -50,18 +66,19 @@ export function OrderForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!productId) {
-      toast.error("Select a product");
+    if (!selected) {
+      toast.error("Select a product size");
       return;
     }
     const qty = Number(quantity);
-    if (selectedProduct && qty > (selectedProduct.stockQuantity ?? 0)) {
-      toast.error(`Only ${selectedProduct.stockQuantity} in stock`);
+    if (qty > selected.variant.stockQuantity) {
+      toast.error(`Only ${selected.variant.stockQuantity} in stock`);
       return;
     }
     try {
       await createOrder({
-        productId,
+        productId: selected.productId,
+        variantId: selected.variant._id,
         quantity: qty,
         discount: discount ? Number(discount) : undefined,
         customerName: customerName || undefined,
@@ -83,21 +100,22 @@ export function OrderForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Product</Label>
+            <Label>Product &amp; size</Label>
             <Input
               placeholder="Search products..."
               value={productSearch}
               onChange={(e) => setProductSearch(e.target.value)}
               className="mb-2"
             />
-            <Select value={productId} onValueChange={(v) => setProductId(v as string)}>
+            <Select value={selectedKey} onValueChange={(v) => setSelectedKey(v as string)}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a product" />
+                <SelectValue placeholder="Select a product size" />
               </SelectTrigger>
               <SelectContent>
-                {products.map((p) => (
-                  <SelectItem key={p._id} value={p._id as string}>
-                    {p.name} — ৳{p.price.toLocaleString()} ({p.stockQuantity ?? 0} in stock)
+                {options.map((o) => (
+                  <SelectItem key={`${o.productId}:${o.variant._id}`} value={`${o.productId}:${o.variant._id}`}>
+                    {o.productName} — {o.variant.sizeLabel} — ৳{o.variant.price.toLocaleString()} (
+                    {o.variant.stockQuantity} in stock)
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -111,7 +129,7 @@ export function OrderForm() {
                 id="order-qty"
                 type="number"
                 min={1}
-                max={selectedProduct?.stockQuantity ?? undefined}
+                max={selected?.variant.stockQuantity ?? undefined}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 required
@@ -153,11 +171,11 @@ export function OrderForm() {
             <Input id="order-note" value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
 
-          {selectedProduct && (
+          {selected && (
             <p className="text-sm text-muted-foreground">
               Total: ৳
               {(
-                selectedProduct.price * Number(quantity || 0) - Number(discount || 0)
+                selected.variant.price * Number(quantity || 0) - Number(discount || 0)
               ).toLocaleString()}
             </p>
           )}

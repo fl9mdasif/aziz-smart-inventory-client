@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Search, Package } from "lucide-react";
 import { toast } from "sonner";
-import { TProduct, TProductStatus } from "@/types";
+import { TProduct, TProductStatus, TVariant } from "@/types";
 import { useGetAllProductsQuery, useDeleteProductMutation } from "@/redux/api/productApi";
 import { useGetAllCategoriesQuery } from "@/redux/api/categoryApi";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -23,6 +23,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+// A product can have several sizes at different price/stock levels, so the
+// table shows one row per variant (repeating the parent product's
+// name/thumbnail on each) rather than trying to squeeze a whole size range
+// into a single number — matches the client migration spec's fallback choice.
+interface VariantRow {
+  product: TProduct;
+  variant: TVariant;
+}
 
 export default function InventoryPage() {
   const [search, setSearch] = useState("");
@@ -44,6 +53,9 @@ export default function InventoryPage() {
   const [deleteProduct] = useDeleteProductMutation();
 
   const products = (productList?.items ?? []) as TProduct[];
+  const rows: VariantRow[] = products.flatMap((product) =>
+    (product.variants ?? []).map((variant) => ({ product, variant })),
+  );
 
   const handleDelete = async (id: string) => {
     try {
@@ -54,45 +66,55 @@ export default function InventoryPage() {
     }
   };
 
-  const columns: DataTableColumn<TProduct>[] = [
+  const columns: DataTableColumn<VariantRow>[] = [
     {
       header: "",
-      cell: (p) =>
-        p.thumbnail ? (
+      cell: ({ product }) =>
+        product.thumbnail ? (
           <div className="relative size-10 overflow-hidden rounded-md bg-muted">
-            <Image src={p.thumbnail} alt={p.name} fill className="object-cover" />
+            <Image src={product.thumbnail} alt={product.name} fill className="object-cover" />
           </div>
         ) : (
           <div className="size-10 rounded-md bg-muted" />
         ),
       className: "w-14",
     },
-    { header: "Name", cell: (p) => <span className="font-medium">{p.name}</span> },
+    {
+      header: "Product",
+      cell: ({ product }) => (
+        <div>
+          <p className="font-medium">{product.name}</p>
+          <p className="text-xs text-muted-foreground">{product.modelNo}</p>
+        </div>
+      ),
+    },
     {
       header: "Category",
-      cell: (p) => (typeof p.category === "string" ? p.category : p.category?.name) || "—",
+      cell: ({ product }) =>
+        (typeof product.category === "string" ? product.category : product.category?.name) || "—",
     },
-    { header: "Price", cell: (p) => `৳${p.price.toLocaleString()}` },
-    { header: "Stock", cell: (p) => p.stockQuantity ?? 0 },
+    { header: "Size", cell: ({ variant }) => variant.sizeLabel },
+    { header: "Price", cell: ({ variant }) => `৳${variant.price.toLocaleString()}` },
+    { header: "Stock", cell: ({ variant }) => variant.stockQuantity },
     {
       header: "Status",
-      cell: (p) => (
+      cell: ({ variant }) => (
         <StatusBadge
-          label={productStatusLabel(p.status)}
-          variant={productStatusToVariant(p.status)}
+          label={productStatusLabel(variant.status)}
+          variant={productStatusToVariant(variant.status)}
         />
       ),
     },
     {
       header: "",
-      cell: (p) => (
+      cell: ({ product }) => (
         <RoleGate allow={["admin", "superAdmin"]}>
           <div className="flex justify-end gap-1">
-            <ProductFormDialog product={p} />
+            <ProductFormDialog product={product} />
             <ConfirmDialog
               title="Delete product"
-              description={`Delete "${p.name}"? This can't be undone.`}
-              onConfirm={() => handleDelete(p._id as string)}
+              description={`Delete "${product.name}" and all its sizes? This can't be undone.`}
+              onConfirm={() => handleDelete(product._id as string)}
             />
           </div>
         </RoleGate>
@@ -152,10 +174,10 @@ export default function InventoryPage() {
 
       <DataTable
         columns={columns}
-        data={products}
+        data={rows}
         isLoading={isLoading}
         isError={isError}
-        rowKey={(p) => p._id as string}
+        rowKey={({ product, variant }) => `${product._id}-${variant._id}`}
         emptyMessage="No products yet."
       />
     </div>
