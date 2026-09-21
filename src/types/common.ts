@@ -105,8 +105,7 @@ export interface TPublicProduct {
   slug: string;
   thumbnail: string;
   category: { _id: string; name: string; slug: string } | string;
-  priceFrom: number;
-  priceTo: number;
+  price: number; 
   availability: TAvailability;
 }
 

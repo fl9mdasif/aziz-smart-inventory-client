@@ -44,7 +44,7 @@ export function Hero({ productCount }: { productCount?: number }) {
           transition={{ duration: 0.5, delay: 0.05 }}
           className="mx-auto max-w-2xl text-3xl font-semibold leading-tight tracking-tight sm:text-5xl"
         >
-          Industrial parts &amp; supplies,{" "}
+          Sewing parts &amp; supplies,{" "}
           <span
             className="bg-gradient-to-r from-primary via-orange-500 to-amber-500 bg-clip-text text-transparent"
           >
