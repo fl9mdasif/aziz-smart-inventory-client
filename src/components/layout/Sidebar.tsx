@@ -46,22 +46,22 @@ export function SidebarNav({
   return (
     <nav
       className={cn(
-        "flex h-full flex-col gap-6 overflow-y-auto border-r bg-background p-3 transition-[width] duration-200",
+        "flex h-full flex-col gap-6 overflow-y-auto border-r border-sidebar-border bg-sidebar p-3 text-sidebar-foreground transition-[width] duration-200",
         collapsed ? "w-16" : "w-64",
       )}
     >
       <div className="flex items-center justify-between px-1">
         {!collapsed && (
           <div>
-            <p className="text-sm font-semibold">Aziz Brothers</p>
-            <p className="text-xs text-muted-foreground">Smart Inventory</p>
+            <p className="text-sm font-semibold text-sidebar-foreground">Aziz Brothers</p>
+            <p className="text-xs text-sidebar-foreground/60">Smart Inventory</p>
           </div>
         )}
         {onToggleCollapsed && (
           <Button
             variant="ghost"
             size="icon-sm"
-            className="shrink-0"
+            className="shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={onToggleCollapsed}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -76,7 +76,7 @@ export function SidebarNav({
         return (
           <div key={group}>
             {!collapsed && (
-              <p className="px-2 pb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="px-2 pb-2 text-xs font-medium uppercase tracking-wide text-sidebar-foreground/50">
                 {group}
               </p>
             )}
@@ -92,8 +92,8 @@ export function SidebarNav({
                       "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
                       collapsed && "justify-center",
                       isActive
-                        ? "bg-foreground text-background"
-                        : "text-foreground/80 hover:bg-muted",
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                     )}
                   >
                     <item.icon className="size-4 shrink-0" />
@@ -115,14 +115,14 @@ export function SidebarNav({
         );
       })}
 
-      <div className="mt-auto border-t pt-3">
+      <div className="mt-auto border-t border-sidebar-border pt-3">
         {collapsed ? (
           <Tooltip>
             <TooltipTrigger render={<div />}>
               <button
                 onClick={handleLogout}
                 aria-label="Log out"
-                className="flex w-full items-center justify-center rounded-md px-2 py-1.5 text-sm text-foreground/80 transition-colors hover:bg-muted"
+                className="flex w-full items-center justify-center rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <LogOut className="size-4 shrink-0" />
               </button>
@@ -132,7 +132,7 @@ export function SidebarNav({
         ) : (
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-foreground/80 transition-colors hover:bg-muted"
+            className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <LogOut className="size-4 shrink-0" />
             <span>Log out</span>

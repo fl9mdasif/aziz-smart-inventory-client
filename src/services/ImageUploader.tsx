@@ -107,15 +107,11 @@ export const ImageUploader = ({
       formData.append("image", compressedFile);
       formData.append("name", compressedFile.name);
 
-      // --- Upload to imgBB ---
-      const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-      const response = await axios.post(
-        `https://api.imgbb.com/1/upload?key=${apiKey}`,
-        formData,
-      );
+      // --- Upload to Cloudinary (via our own signed server route) ---
+      const response = await axios.post("/api/upload", formData);
 
       if (response.data.success) {
-        const imageUrl = response.data.data.display_url;
+        const imageUrl = response.data.url;
         setPreview(imageUrl);
         onUploadSuccess(imageUrl);
         toast.success(`Uploaded · ${finalKb} KB`);

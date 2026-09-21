@@ -1,7 +1,21 @@
 "use client";
 
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { formatDistanceToNow, startOfMonth, subDays, formatISO } from "date-fns";
-import { Package, AlertTriangle, DollarSign, CalendarDays, Lock } from "lucide-react";
+import {
+  Package,
+  AlertTriangle,
+  DollarSign,
+  CalendarDays,
+  Lock,
+  ShoppingCart,
+  Boxes,
+  UserCog,
+  Settings2,
+  type LucideIcon,
+} from "lucide-react";
+import type { TActivityType } from "@/types";
 import { useGetAllProductsQuery, useGetRestockQueueQuery } from "@/redux/api/productApi";
 import {
   useGetSalesAnalyticsQuery,
@@ -37,20 +51,43 @@ export default function DashboardPage() {
   const twoMonthsAgo = formatISO(subDays(startOfMonth(new Date()), 32), { representation: "date" });
 
   const { data: productList } = useGetAllProductsQuery({ limit: 1 });
-  const { data: restockQueue } = useGetRestockQueueQuery(undefined, { skip: !isPrivileged });
+  const { data: restockQueue, isError: restockError } = useGetRestockQueueQuery(undefined, {
+    skip: !isPrivileged,
+  });
 
   // one 30-day daily series feeds both the big chart and the KPI sparklines/trends
-  const { data: dailySeries } = useGetSalesAnalyticsQuery(
+  const { data: dailySeries, isError: dailySeriesError } = useGetSalesAnalyticsQuery(
     { period: "daily", from: thirtyDaysAgo, to: today },
     { skip: !isPrivileged },
   );
-  const { data: monthlySeries } = useGetSalesAnalyticsQuery(
+  const { data: monthlySeries, isError: monthlySeriesError } = useGetSalesAnalyticsQuery(
     { period: "monthly", from: twoMonthsAgo, to: today },
     { skip: !isPrivileged },
   );
-  const { data: topProducts } = useGetTopProductsQuery({ limit: 5 }, { skip: !isPrivileged });
-  const { data: byCategory } = useGetSalesByCategoryQuery(undefined, { skip: !isPrivileged });
-  const { data: activities, isLoading: activitiesLoading } = useGetRecentActivitiesQuery();
+  const { data: topProducts, isError: topProductsError } = useGetTopProductsQuery(
+    { limit: 5 },
+    { skip: !isPrivileged },
+  );
+  const { data: byCategory, isError: byCategoryError } = useGetSalesByCategoryQuery(undefined, {
+    skip: !isPrivileged,
+  });
+  const {
+    data: activities,
+    isLoading: activitiesLoading,
+    isError: activitiesError,
+  } = useGetRecentActivitiesQuery();
+
+  // These queries fail silently in the UI otherwise (data ?? 0/[] renders the
+  // same whether a request 401'd or genuinely returned nothing) — surface it
+  // so an expired/invalid token doesn't look like "no sales today".
+  const hasFetchError =
+    restockError || dailySeriesError || monthlySeriesError || topProductsError || byCategoryError || activitiesError;
+  useEffect(() => {
+    if (hasFetchError) {
+      toast.error("Couldn't load some dashboard data — try logging out and back in.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasFetchError]);
 
   const totalProducts = productList?.meta?.total ?? 0;
   const lowStockCount = restockQueue?.length ?? 0;
@@ -120,11 +157,18 @@ export default function DashboardPage() {
   );
 }
 
+const ACTIVITY_ICON: Record<TActivityType, LucideIcon> = {
+  order: ShoppingCart,
+  product: Boxes,
+  user: UserCog,
+  system: Settings2,
+};
+
 function RecentActivityCard({
   activities,
   isLoading,
 }: {
-  activities?: { _id: string; message: string; createdAt: string }[];
+  activities?: { _id: string; type: TActivityType; message: string; createdAt: string }[];
   isLoading: boolean;
 }) {
   return (
@@ -140,17 +184,25 @@ function RecentActivityCard({
           <p className="text-sm text-muted-foreground">No recent activity yet.</p>
         )}
 
-        {activities?.map((activity) => (
-          <div
-            key={activity._id}
-            className="flex items-center justify-between border-b pb-2 text-sm last:border-0 last:pb-0"
-          >
-            <span>{activity.message}</span>
-            <span className="shrink-0 pl-4 text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
-            </span>
-          </div>
-        ))}
+        {activities?.map((activity) => {
+          const Icon = ACTIVITY_ICON[activity.type] ?? Settings2;
+          return (
+            <div
+              key={activity._id}
+              className="flex items-center justify-between gap-3 border-b pb-2 text-sm last:border-0 last:pb-0"
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                  <Icon className="size-3.5" />
+                </span>
+                <span className="truncate">{activity.message}</span>
+              </div>
+              <span className="shrink-0 pl-4 text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
+              </span>
+            </div>
+          );
+        })}
       </CardContent>
     </Card>
   );

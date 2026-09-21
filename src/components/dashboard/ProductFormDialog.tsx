@@ -132,6 +132,11 @@ export function ProductFormDialog({ product }: { product?: TProduct }) {
       return;
     }
 
+    if (!isEdit && !thumbnail) {
+      toast.error("Please upload a thumbnail image");
+      return;
+    }
+
     try {
       const payload = {
         modelNo,
@@ -139,7 +144,7 @@ export function ProductFormDialog({ product }: { product?: TProduct }) {
         slug: slugify(name),
         description,
         category: categoryId,
-        thumbnail,
+        thumbnail: thumbnail || undefined,
         brand: brand || undefined,
         moq: moq || undefined,
         samplesAvailable,

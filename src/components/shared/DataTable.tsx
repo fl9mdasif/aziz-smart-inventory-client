@@ -37,8 +37,8 @@ export function DataTable<T>({
       <Table>
         <TableHeader className="bg-muted/40">
           <TableRow>
-            {columns.map((col) => (
-              <TableHead key={col.header} className={col.className}>
+            {columns.map((col, i) => (
+              <TableHead key={i} className={col.className}>
                 {col.header}
               </TableHead>
             ))}
@@ -48,8 +48,8 @@ export function DataTable<T>({
           {isLoading &&
             Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={`skeleton-${i}`}>
-                {columns.map((col) => (
-                  <TableCell key={col.header}>
+                {columns.map((col, j) => (
+                  <TableCell key={j}>
                     <Skeleton className="h-5 w-full max-w-32" />
                   </TableCell>
                 ))}
@@ -76,8 +76,8 @@ export function DataTable<T>({
             !isError &&
             data?.map((row) => (
               <TableRow key={rowKey(row)} className={rowClassName?.(row)}>
-                {columns.map((col) => (
-                  <TableCell key={col.header} className={col.className}>
+                {columns.map((col, i) => (
+                  <TableCell key={i} className={col.className}>
                     {col.cell(row)}
                   </TableCell>
                 ))}
