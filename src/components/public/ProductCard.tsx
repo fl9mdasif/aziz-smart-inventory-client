@@ -59,7 +59,7 @@ export function ProductCard({ product }: { product: TPublicProduct }) {
           <h3 className="line-clamp-2 font-medium leading-snug">{product.name}</h3>
           <div className="flex items-center justify-between pt-1">
             <span className="font-semibold">
-              {product.price}
+              {/* ৳{product.price.toLocaleString()} */}
             </span>
             <StatusBadge
               label={availabilityLabel[product.availability]}

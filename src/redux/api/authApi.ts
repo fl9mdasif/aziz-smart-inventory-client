@@ -25,21 +25,6 @@ const authApi = baseApi.injectEndpoints({
       }),
     }),
 
-    register: build.mutation<TUser, {
-      username: string;
-      email: string;
-      password: string;
-      role?: string;
-      contactNumber: string;
-      profilePicture?: string;
-    }>({
-      query: (data) => ({
-        url: "/auth/register",
-        method: "POST",
-        data,
-      }),
-    }),
-
     getMe: build.query<TUser, void>({
       query: () => ({
         url: "/auth/me",
@@ -79,7 +64,6 @@ const authApi = baseApi.injectEndpoints({
 
 export const {
   useLoginMutation,
-  useRegisterMutation,
   useGetMeQuery,
   useUpdateProfileMutation,
   useChangePasswordMutation,

@@ -96,9 +96,10 @@ export type TAvailability = 'in stock' | 'low stock' | 'out of stock';
 
 // Shape returned by GET /products for an anonymous (unauthenticated) caller —
 // see aziz-server product service's `toPublicShape`. Deliberately thinner
-// than TProduct — no description/modelNo/variants detail, just a price
-// range (a product can have several sizes at different prices) and an
-// overall availability rolled up from all variants' statuses.
+// than TProduct — no description/modelNo/variants detail. `price` is the
+// lowest variant's price (a "starting from" figure, since a product can have
+// several sizes at different prices), and `availability` is rolled up from
+// all variants' statuses.
 export interface TPublicProduct {
   _id: string;
   name: string;

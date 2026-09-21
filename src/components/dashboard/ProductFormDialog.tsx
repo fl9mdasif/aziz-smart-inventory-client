@@ -158,7 +158,10 @@ export function ProductFormDialog({ product }: { product?: TProduct }) {
         await updateProduct({ id: product._id, data: payload }).unwrap();
         toast.success("Product updated");
       } else {
-        await createProduct(payload).unwrap();
+        // `thumbnail` is validated non-empty above (create requires it);
+        // spread it back in to narrow payload.thumbnail from `string |
+        // undefined` (fine for a partial update) to the `string` createProduct requires.
+        await createProduct({ ...payload, thumbnail }).unwrap();
         toast.success("Product created");
       }
       setOpen(false);

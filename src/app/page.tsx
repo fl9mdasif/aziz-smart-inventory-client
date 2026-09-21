@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { useGetAllCategoriesQuery } from "@/redux/api/categoryApi";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { Hero } from "@/components/public/Hero";
+import { WhyChooseUs } from "@/components/public/WhyChooseUs";
 import { HowToBuy } from "@/components/public/HowToBuy";
 import { CategoryFilter } from "@/components/public/CategoryFilter";
 import { ProductCard } from "@/components/public/ProductCard";
@@ -34,30 +36,47 @@ export default function Home() {
 
   // Anonymous requests get TPublicProduct[] from the server (see types/common.ts)
   const products = (productList?.items ?? []) as TPublicProduct[];
+  const activeCategories = categories?.filter((c) => c.isActive) ?? [];
 
   return (
     <div className="flex min-h-screen flex-col">
       <PublicHeader />
       <Hero productCount={productList?.meta?.total} />
+      <WhyChooseUs />
 
-      <main id="products" className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Available now</h2>
+      <main id="products" className="mx-auto w-full max-w-6xl flex-1 scroll-mt-16 px-4 py-12 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+        >
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Available now</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {activeCategories.length === 1
+                ? `Currently stocking: ${activeCategories[0].name}`
+                : "Everything currently in stock, updated in real time."}
+            </p>
+          </div>
           <div className="relative w-full sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search products..."
+              placeholder="Search by part name..."
               className="pl-9"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-        </div>
+        </motion.div>
 
-        {categories && categories.length > 0 && (
+        {/* MVP runs a single category — the filter pills only add value once
+            there's something to actually filter between. */}
+        {activeCategories.length > 1 && (
           <div className="mb-6">
             <CategoryFilter
-              categories={categories}
+              categories={categories ?? []}
               activeId={categoryId}
               onSelect={setCategoryId}
             />

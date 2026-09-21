@@ -6,6 +6,7 @@ import { Package, ShoppingCart, User, Settings2 } from "lucide-react";
 import { TActivity, TActivityType } from "@/types";
 import { useGetRecentActivitiesQuery } from "@/redux/api/activityApi";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { Pagination } from "@/components/shared/Pagination";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,23 +24,36 @@ const TYPE_ICON: Record<TActivityType, typeof Package> = {
   system: Settings2,
 };
 
+const PAGE_SIZE = 10;
+
 export default function ActivityPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const { data: activities, isLoading, isError } = useGetRecentActivitiesQuery();
+  const [page, setPage] = useState(1);
 
-  // The server always returns the last 10 regardless of query params (see
-  // activityApi.ts's note) — filtering by type here is client-side only,
-  // over whatever those 10 happen to be, not a real server-side query.
-  const filtered = (activities ?? []).filter(
-    (a: TActivity) => typeFilter === "all" || a.type === typeFilter,
-  );
+  // Changing the type filter invalidates the current page — jump back to
+  // page 1 right in the handler, not via an effect.
+  const handleTypeChange = (value: string) => {
+    setTypeFilter(value);
+    setPage(1);
+  };
+
+  const {
+    data: activityList,
+    isLoading,
+    isError,
+  } = useGetRecentActivitiesQuery({
+    type: typeFilter !== "all" ? (typeFilter as TActivityType) : undefined,
+    page,
+    limit: PAGE_SIZE,
+  });
+  const activities = activityList?.items ?? [];
 
   return (
     <div>
       <PageHeader title="Inventory Activity" description="Recent order, product, and account events" />
 
       <div className="mb-4">
-        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as string)}>
+        <Select value={typeFilter} onValueChange={(v) => handleTypeChange(v as string)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
@@ -68,7 +82,7 @@ export default function ActivityPage() {
             </p>
           )}
 
-          {!isLoading && !isError && filtered.length === 0 && (
+          {!isLoading && !isError && activities.length === 0 && (
             <p className="p-6 text-center text-sm text-muted-foreground">
               No activity{typeFilter !== "all" ? ` of type "${typeFilter}"` : ""} yet.
             </p>
@@ -76,7 +90,7 @@ export default function ActivityPage() {
 
           {!isLoading &&
             !isError &&
-            filtered.map((activity: TActivity) => {
+            activities.map((activity: TActivity) => {
               const Icon = TYPE_ICON[activity.type] ?? Settings2;
               return (
                 <div key={activity._id} className="flex items-center gap-3 p-4">
@@ -94,6 +108,7 @@ export default function ActivityPage() {
             })}
         </CardContent>
       </Card>
+      <Pagination meta={activityList?.meta} onPageChange={setPage} />
     </div>
   );
 }

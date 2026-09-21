@@ -65,17 +65,18 @@ export default function DashboardPage() {
     { skip: !isPrivileged },
   );
   const { data: topProducts, isError: topProductsError } = useGetTopProductsQuery(
-    { limit: 5 },
+    { limit: 10 },
     { skip: !isPrivileged },
   );
   const { data: byCategory, isError: byCategoryError } = useGetSalesByCategoryQuery(undefined, {
     skip: !isPrivileged,
   });
   const {
-    data: activities,
+    data: activityList,
     isLoading: activitiesLoading,
     isError: activitiesError,
-  } = useGetRecentActivitiesQuery();
+  } = useGetRecentActivitiesQuery({ limit: 10 });
+  const activities = activityList?.items;
 
   // These queries fail silently in the UI otherwise (data ?? 0/[] renders the
   // same whether a request 401'd or genuinely returned nothing) — surface it
@@ -86,7 +87,6 @@ export default function DashboardPage() {
     if (hasFetchError) {
       toast.error("Couldn't load some dashboard data — try logging out and back in.");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasFetchError]);
 
   const totalProducts = productList?.meta?.total ?? 0;

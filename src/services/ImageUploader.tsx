@@ -5,6 +5,8 @@ import axios from "axios";
 import { UploadCloud, X, Loader2, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import { authKey } from "@/contains/authKey";
+import { getFromLocalStorage } from "@/utils/local-storage";
 
 interface ImageUploaderProps {
   onUploadSuccess: (url: string) => void;
@@ -17,7 +19,7 @@ const MAX_SIZE_BYTES = 100 * 1024; // 100 KB
  * Compress an image file using a canvas until it is under maxBytes.
  * Returns a Blob ready for upload.
  */
-async function compressImage(file: File, maxBytes: number): Promise<Blob> {
+export async function compressImage(file: File, maxBytes: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     const objectUrl = URL.createObjectURL(file);
@@ -107,8 +109,11 @@ export const ImageUploader = ({
       formData.append("image", compressedFile);
       formData.append("name", compressedFile.name);
 
-      // --- Upload to Cloudinary (via our own signed server route) ---
-      const response = await axios.post("/api/upload", formData);
+      // --- Upload to Cloudinary (via our own signed server route, which
+      // requires the caller to be a logged-in staff/admin session) ---
+      const response = await axios.post("/api/upload", formData, {
+        headers: { Authorization: getFromLocalStorage(authKey) ?? "" },
+      });
 
       if (response.data.success) {
         const imageUrl = response.data.url;

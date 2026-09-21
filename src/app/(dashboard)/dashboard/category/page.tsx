@@ -49,7 +49,7 @@ export default function CategoryPage() {
       cell: (c) =>
         c.thumbnail ? (
           <div className="relative size-10 overflow-hidden rounded-md bg-muted">
-            <Image src={c.thumbnail} alt={c.name} fill className="object-cover" />
+            <Image src={c.thumbnail} alt={c.name} fill sizes="40px" className="object-cover" />
           </div>
         ) : (
           <div className="size-10 rounded-md bg-muted" />

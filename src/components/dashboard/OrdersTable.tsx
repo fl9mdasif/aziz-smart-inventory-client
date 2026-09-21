@@ -7,6 +7,7 @@ import { TOrder } from "@/types";
 import { useGetAllOrdersQuery, useCancelOrderMutation } from "@/redux/api/orderApi";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { DataTable, DataTableColumn } from "@/components/shared/DataTable";
+import { Pagination } from "@/components/shared/Pagination";
 import { RoleGate } from "@/components/shared/RoleGate";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -20,10 +21,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const PAGE_SIZE = 10;
+
 export function OrdersTable() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search);
+
+  // Any filter change invalidates the current page — jump back to page 1
+  // instead of leaving the user stranded on a now-out-of-range page. Reset
+  // it right in the handler that changes the filter, not via an effect.
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+  const handleStatusChange = (value: string) => {
+    setStatus(value);
+    setPage(1);
+  };
 
   const {
     data: orderList,
@@ -32,7 +48,8 @@ export function OrdersTable() {
   } = useGetAllOrdersQuery({
     search: debouncedSearch || undefined,
     status: status !== "all" ? status : undefined,
-    limit: 50,
+    page,
+    limit: PAGE_SIZE,
   });
   const [cancelOrder] = useCancelOrderMutation();
 
@@ -89,9 +106,9 @@ export function OrdersTable() {
           placeholder="Search by customer or product..."
           className="w-full sm:max-w-xs"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
         />
-        <Select value={status} onValueChange={(v) => setStatus(v as string)}>
+        <Select value={status} onValueChange={(v) => handleStatusChange(v as string)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -110,6 +127,7 @@ export function OrdersTable() {
         rowKey={(o) => o._id as string}
         emptyMessage="No orders recorded yet."
       />
+      <Pagination meta={orderList?.meta} onPageChange={setPage} />
     </div>
   );
 }

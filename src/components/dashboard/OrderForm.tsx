@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
+import { ChevronDown } from "lucide-react";
 import { TProduct, TVariant } from "@/types";
 import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { useCreateOrderMutation } from "@/redux/api/orderApi";
@@ -28,6 +30,7 @@ interface VariantOption {
 }
 
 export function OrderForm() {
+  const [collapsed, setCollapsed] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const debouncedSearch = useDebouncedValue(productSearch, 250);
   const [selectedKey, setSelectedKey] = useState(""); // `${productId}:${variantId}`
@@ -94,97 +97,124 @@ export function OrderForm() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">Record a sale</CardTitle>
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? "Expand record a sale form" : "Collapse record a sale form"}
+          className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <motion.span
+            animate={{ rotate: collapsed ? -90 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex"
+          >
+            <ChevronDown className="size-4" />
+          </motion.span>
+        </button>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Product &amp; size</Label>
-            <Input
-              placeholder="Search products..."
-              value={productSearch}
-              onChange={(e) => setProductSearch(e.target.value)}
-              className="mb-2"
-            />
-            <Select value={selectedKey} onValueChange={(v) => setSelectedKey(v as string)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a product size" />
-              </SelectTrigger>
-              <SelectContent>
-                {options.map((o) => (
-                  <SelectItem key={`${o.productId}:${o.variant._id}`} value={`${o.productId}:${o.variant._id}`}>
-                    {o.productName} — {o.variant.sizeLabel} — ৳{o.variant.price.toLocaleString()} (
-                    {o.variant.stockQuantity} in stock)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <AnimatePresence initial={false}>
+        {!collapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label>Product &amp; size</Label>
+                  <Input
+                    placeholder="Search products..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="mb-2"
+                  />
+                  <Select value={selectedKey} onValueChange={(v) => setSelectedKey(v as string)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a product size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {options.map((o) => (
+                        <SelectItem key={`${o.productId}:${o.variant._id}`} value={`${o.productId}:${o.variant._id}`}>
+                          {o.productName} — {o.variant.sizeLabel} — ৳{o.variant.price.toLocaleString()} (
+                          {o.variant.stockQuantity} in stock)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="order-qty">Quantity</Label>
-              <Input
-                id="order-qty"
-                type="number"
-                min={1}
-                max={selected?.variant.stockQuantity ?? undefined}
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="order-discount">Discount (৳, optional)</Label>
-              <Input
-                id="order-discount"
-                type="number"
-                min={0}
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-              />
-            </div>
-          </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="order-qty">Quantity</Label>
+                    <Input
+                      id="order-qty"
+                      type="number"
+                      min={1}
+                      max={selected?.variant.stockQuantity ?? undefined}
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="order-discount">Discount (৳, optional)</Label>
+                    <Input
+                      id="order-discount"
+                      type="number"
+                      min={0}
+                      value={discount}
+                      onChange={(e) => setDiscount(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="order-customer">Customer name (optional)</Label>
-              <Input
-                id="order-customer"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="order-contact">Contact (optional)</Label>
-              <Input
-                id="order-contact"
-                value={customerContact}
-                onChange={(e) => setCustomerContact(e.target.value)}
-              />
-            </div>
-          </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="order-customer">Customer name (optional)</Label>
+                    <Input
+                      id="order-customer"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="order-contact">Contact (optional)</Label>
+                    <Input
+                      id="order-contact"
+                      value={customerContact}
+                      onChange={(e) => setCustomerContact(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="order-note">Note (optional)</Label>
-            <Input id="order-note" value={note} onChange={(e) => setNote(e.target.value)} />
-          </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="order-note">Note (optional)</Label>
+                  <Input id="order-note" value={note} onChange={(e) => setNote(e.target.value)} />
+                </div>
 
-          {selected && (
-            <p className="text-sm text-muted-foreground">
-              Total: ৳
-              {(
-                selected.variant.price * Number(quantity || 0) - Number(discount || 0)
-              ).toLocaleString()}
-            </p>
-          )}
+                {selected && (
+                  <p className="text-sm text-muted-foreground">
+                    Total: ৳
+                    {(
+                      selected.variant.price * Number(quantity || 0) - Number(discount || 0)
+                    ).toLocaleString()}
+                  </p>
+                )}
 
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Recording..." : "Record sale"}
-          </Button>
-        </form>
-      </CardContent>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Recording..." : "Record sale"}
+                </Button>
+              </form>
+            </CardContent>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Card>
   );
 }

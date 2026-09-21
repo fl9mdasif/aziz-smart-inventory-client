@@ -72,7 +72,7 @@ export default function InventoryPage() {
       cell: ({ product }) =>
         product.thumbnail ? (
           <div className="relative size-10 overflow-hidden rounded-md bg-muted">
-            <Image src={product.thumbnail} alt={product.name} fill className="object-cover" />
+            <Image src={product.thumbnail} alt={product.name} fill sizes="40px" className="object-cover" />
           </div>
         ) : (
           <div className="size-10 rounded-md bg-muted" />

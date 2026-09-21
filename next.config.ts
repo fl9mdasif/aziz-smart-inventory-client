@@ -1,14 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    // env: {
-    //   NEXT_PUBLIC_API_URL: "https://api.sultan-bazar.com/api/v1",
-    // },
   images: {
     remotePatterns: [
+      // Every image (product/category thumbnails, avatars) goes through
+      // /api/upload -> Cloudinary — a wildcard hostname here lets anyone
+      // abuse the image optimizer as an open URL-fetching proxy.
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "res.cloudinary.com",
       },
     ],
   },

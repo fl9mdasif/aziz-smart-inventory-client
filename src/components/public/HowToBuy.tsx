@@ -30,7 +30,7 @@ const steps = [
 
 export function HowToBuy() {
   return (
-    <section className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6">
+    <section id="how-to-buy" className="relative mx-auto max-w-6xl scroll-mt-16 px-4 py-16 sm:px-6">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
